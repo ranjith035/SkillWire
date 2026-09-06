@@ -9,131 +9,144 @@
   ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝ ╚══╝╚══╝ ╚═╝╚═╝  ╚═╝╚══════╝
 ```
 
-### The Open, Vendor-Neutral Protocol for Reusable AI Skills
-**"npm for AI Skills" — Package, Version, Validate, Compose, and Execute Across Any AI Runtime**
+### The Open, Vendor-Neutral Protocol for Enterprise AI Skills
+**Standardized Packaging, Cryptographic Provenance, and Cross-Platform Delivery for Enterprise AI Workflows**
 
-[![Specification](https://img.shields.io/badge/spec-ASP%20v1.0-6366f1.svg?style=for-the-badge)](SPEC.md)
-[![Schema](https://img.shields.io/badge/schema-Draft%202020--12-10b981.svg?style=for-the-badge)](schema/skill-manifest.schema.json)
-[![Tests](https://img.shields.io/badge/tests-96%20passed-brightgreen.svg?style=for-the-badge)](cli/tests/)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg?style=for-the-badge)](https://python.org)
-[![License](https://img.shields.io/badge/license-Apache%202.0-red.svg?style=for-the-badge)](LICENSE)
+[![Specification](https://img.shields.io/badge/Specification-ASP%20v1.0-6366f1.svg?style=for-the-badge)](SPEC.md)
+[![Schema](https://img.shields.io/badge/JSON%20Schema-Draft%202020--12-10b981.svg?style=for-the-badge)](schema/skill-manifest.schema.json)
+[![Compliance](https://img.shields.io/badge/Governance-Zero--Trust%20Sandboxing-blue.svg?style=for-the-badge)](docs/security-model.md)
+[![Tests](https://img.shields.io/badge/Verification-96%20Passed-brightgreen.svg?style=for-the-badge)](cli/tests/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-red.svg?style=for-the-badge)](LICENSE)
 
-[**Read the Spec**](SPEC.md) • [**Quickstart**](#-quickstart) • [**Claude Code & Gemini Setup**](#-using-with-claude-code--gemini-cli) • [**Architecture**](docs/architecture.md) • [**Security Model**](docs/security-model.md)
+[**Protocol Specification**](SPEC.md) • [**Architecture Whitepaper**](docs/architecture.md) • [**Enterprise Security Model**](docs/security-model.md) • [**Competitive Analysis**](docs/competitive-analysis.md)
 
 </div>
 
 ---
 
-## ⚡ Executive Summary
+## 🏛️ Executive Summary & Strategic Value
 
-Today, AI prompt logic is deeply fragmented. A code-review prompt crafted for **Claude Code** cannot run in **Gemini CLI**. An agent persona developed for **LangChain** cannot be shared with a **VS Code Copilot** workspace without manual rewriting. There is no standard for:
+As enterprises scale generative AI and agentic engineering, organizations face a critical structural challenge: **prompt and skill fragmentation**.
 
-* **Semantic Versioning** (`skill-name@1.4.2`)
-* **Input / Output Schema Validation** (JSON Schema typed contracts)
-* **Deterministic Dependencies** (Skill A composes with Skill B via `skill.lock`)
-* **Integrity & Auditing** (SHA-256 package checksums)
-* **Decentralized Discovery** (Git-native distribution without proprietary lock-in)
+Internal AI logic today exists in scattered markdown documents, bespoke Python scripts, proprietary SaaS dashboards, or localized IDE files. This unmanaged proliferation creates severe operational and governance risks:
 
-**SkillWire (AI Skill Protocol / ASP 1.0)** solves this by introducing a standardized packaging, validation, and delivery layer for reusable AI behaviors.
+* **Model Vendor Lock-in**: Prompt logic tightly coupled to a single vendor API restricts the ability to leverage competitive multi-model routing (Anthropic Claude, Google Gemini, OpenAI, or on-premise open weights).
+* **Supply Chain Vulnerability & Prompt Sprawl**: Lack of versioning, dependency tracking, or integrity validation exposes corporate environments to indirect prompt injection and uncontrolled prompt drift.
+* **Absence of Governance & Auditability**: Inability to verify which version of a skill was executed in production or enforce strict capability boundaries (network, filesystem, code execution).
+* **Developer Inefficiency**: Engineering teams repeatedly re-invent the same review, analysis, and data transformation logic across different tools.
 
----
-
-## 🧩 The Core Problem: The $N \times M$ Fragmentation
-
-```
-WITHOUT SKILLWIRE:
-  Claude Code ──────> Custom CLAUDE.md prompts (unversioned, untyped)
-  Gemini CLI  ──────> Custom GEMINI.md prompts (duplicated logic)
-  LangChain   ──────> Framework-specific PromptTemplates (locked into Python)
-  Custom App  ──────> Hardcoded prompt strings in application code
-  [Result: N runtimes × M skills = N × M duplicate implementations]
-
-WITH SKILLWIRE:
-                          ┌──────────────────────────┐
-                          │   SkillWire (.skill)     │
-                          │   • skill.yaml manifest  │
-                          │   • skill.lock SHA-256   │
-                          │   • JSON Schema Draft    │
-                          └─────────────┬────────────┘
-                                        │
-             ┌──────────────────────────┼──────────────────────────┐
-             ▼                          ▼                          ▼
-     Claude Code (MCP)           Gemini CLI (MCP)             Custom LLM App
-(prompts/get: rendered)     (prompts/get: rendered)       (Python/TS SDK load)
-```
+**SkillWire (AI Skill Protocol / ASP 1.0)** is an open standard that brings **package management rigor, deterministic provenance, and schema-enforced contracts** to AI behaviors—enabling enterprises to package, version, govern, and distribute skills seamlessly across **Claude Code, Gemini CLI, enterprise agents, and internal platforms**.
 
 ---
 
-## 🚀 Quickstart
+## 🏢 Enterprise Architecture Overview
 
-### 1. Install the Reference CLI
-```bash
-pip install asp-cli
-# Or install in development mode from source:
-git clone https://github.com/ranjith035/SkillWire.git
-cd SkillWire/cli && pip install -e .
-```
+SkillWire decouples **skill authoring and governance** from **underlying model execution**. The architecture operates across five distinct layers:
 
-### 2. Scaffold a New Skill
-```bash
-mkdir my-skill && cd my-skill
-asp init
 ```
-
-### 3. Validate Against Normative JSON Schema
-```bash
-asp validate
-```
-```
-Validating skill.yaml...
-✓ Manifest is valid
-
-┌─────────────────────────────── Skill Summary ───────────────────────────────┐
-│   Name                code-review                                           │
-│   Version             1.0.0                                                 │
-│   ID                  io.github.example.code-review                         │
-│   Description         Reviews source code for bugs and vulnerabilities.     │
-│   Inputs              code (required), language (optional)                  │
-│   Outputs             review, severity                                      │
-│   Permissions         none (sandboxed)                                      │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 4. Pack for Deterministic Distribution
-```bash
-asp pack . -o ./dist
-```
-Produces an immutable `code-review-1.0.0.skill` gzip archive containing `skill.yaml` and `skill.lock` with SHA-256 integrity pinning.
-
-### 5. Install Directly from Git
-```bash
-asp install github:ranjith035/SkillWire@1.0.0
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                       ENTERPRISE CONSUMPTION LAYER                           │
+│   Developer IDEs (Claude Code, Cursor)  │  Terminal CLI (Gemini CLI)         │
+│   Enterprise RAG Platforms              │  CI/CD Automated Review Pipelines  │
+└──────────────────────────────────────▲───────────────────────────────────────┘
+                                       │ stdio / JSON-RPC 2.0 (MCP Prompts)
+┌──────────────────────────────────────┴───────────────────────────────────────┐
+│                    SKILLWIRE AGENT ENGINE & CLI (asp)                        │
+│   • Input/Output Contract Validation    • Deterministic Dependency Engine    │
+│   • Capability Sandboxing Enforcer      • Lockfile Provenance Verification   │
+└──────────────────────────────────────▲───────────────────────────────────────┘
+                                       │
+┌──────────────────────────────────────┴───────────────────────────────────────┐
+│                      ENTERPRISE REGISTRY LAYER                               │
+│   Internal Git Repositories (GitHub Enterprise, GitLab, Bitbucket)           │
+│   Air-Gapped / Artifact Storage (S3, Artifactory, OCI Registries)            │
+└──────────────────────────────────────▲───────────────────────────────────────┘
+                                       │
+┌──────────────────────────────────────┴───────────────────────────────────────┐
+│                  DETERMINISTIC PACKAGE FORMAT (.skill)                       │
+│   Immutable tar.gz artifact: skill.yaml + skill.lock (SHA-256 integrity)     │
+└──────────────────────────────────────▲───────────────────────────────────────┘
+                                       │
+┌──────────────────────────────────────┴───────────────────────────────────────┐
+│                    NORMATIVE PROTOCOL SPECIFICATION                          │
+│   SPEC.md + schema/skill-manifest.schema.json (JSON Schema Draft 2020-12)    │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🤖 Using with Claude Code & Gemini CLI
+## 🛡️ Enterprise Security & Zero-Trust Governance
 
-SkillWire ships with a built-in **Model Context Protocol (MCP)** server (`asp mcp serve`). Installed skills are automatically exposed as native, parameterized **MCP Prompts**.
+SkillWire was designed from the ground up to address enterprise risk postures, SOC2 requirements, and ISO 27001 supply-chain controls:
 
-### Method 1: Live MCP Server (Recommended)
+### 1. Cryptographic Provenance & Tamper Evidence
+Every `.skill` package compiled via `asp pack` generates a machine-verified `skill.lock` recording SHA-256 checksums of all manifest files and pinned dependencies. Any in-transit tampering or unauthorized instruction modification immediately halts deployment with an `IntegrityError`.
 
-Add to your tool's configuration file:
+### 2. Explicit Capability & Permission Gating
+Skills must declaratively state their required host access. By default, all capabilities are strictly sandboxed:
+```yaml
+permissions:
+  network: false          # Restricts outbound HTTP/socket egress
+  filesystem: false       # Denies local file access
+  code_execution: false   # Disallows shell or sandbox execution
+  tool_use: false         # Restricts downstream MCP tool invocation
+```
+Enterprise runtime hosts inspect these flags prior to execution. If a skill does not explicitly declare `code_execution: true`, host environments reject execution requests.
 
-#### For **Claude Code** (`~/.claude/claude_desktop_config.json`):
+### 3. Namespace Ownership via Reverse-Domain Notation
+Skill identifiers enforce reverse-domain notation:
+```
+com.organization.security.code-review
+org.enterprise.compliance.pii-detector
+```
+This binds namespace ownership to corporate-controlled domain namespaces, preventing typosquatting and internal dependency confusion attacks.
+
+### 4. Safe Archive Extraction
+The unpacker rejects any package containing relative path traversal (`../`) or absolute paths, mitigating archive extraction exploits (Zip Slip vulnerabilities).
+
+---
+
+## 🔄 Dual Integration: Claude Code & Gemini CLI
+
+SkillWire provides out-of-the-box support for corporate AI tools via the **Model Context Protocol (MCP)** and native configuration generators.
+
+```
+                         ┌─────────────────────────────┐
+                         │ Enterprise Skill Repository │
+                         │ (com.corp.security-review)  │
+                         └──────────────┬──────────────┘
+                                        │ asp install
+                                        ▼
+                         ┌─────────────────────────────┐
+                         │   ASP Engine (Local/Host)   │
+                         └──────┬───────────────┬──────┘
+                                │               │
+          MCP Server (stdio)    │               │  Native Adapter Generator
+          asp mcp serve         │               │  asp generate claude / gemini
+                                ▼               ▼
+                     ┌──────────────────┐    ┌──────────────────┐
+                     │   Claude Code    │    │    Gemini CLI    │
+                     │  (/code-review)  │    │   (GEMINI.md)    │
+                     └──────────────────┘    └──────────────────┘
+```
+
+### Method 1: Centralized MCP Integration (Recommended)
+Add the ASP MCP server to your enterprise workstation configuration:
+
+* **For Claude Code** (`~/.claude/claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
     "asp": {
       "command": "asp",
       "args": ["mcp", "serve"],
-      "description": "SkillWire — Installed AI skills as prompts"
+      "description": "Enterprise AI Skill Protocol Engine"
     }
   }
 }
 ```
 
-#### For **Gemini CLI** (`~/.gemini/settings.json`):
+* **For Gemini CLI** (`~/.gemini/settings.json`):
 ```json
 {
   "mcpServers": {
@@ -145,50 +158,43 @@ Add to your tool's configuration file:
 }
 ```
 
-#### Experience in Action
-1. Install any skill: `asp install github:org/security-analysis`
-2. Start Claude Code or Gemini CLI.
-3. Your AI assistant immediately auto-discovers `/security-analysis` with typed parameters!
+Once installed, corporate skills appear immediately as first-class, typed prompt commands across developer environments.
 
----
-
-### Method 2: Offline Markdown Adapters
-
-For headless pipelines or environments without MCP daemon support:
-
+### Method 2: Headless & Air-Gapped Markdown Adapters
+For secure pipelines or build runners operating without background daemons:
 ```bash
-# Generate .claude/skills/code-review.md for Claude Code
+# Generate .claude/skills/review.md for local Claude workspaces
 asp generate claude
 
-# Generate GEMINI.md managed skill blocks for Gemini CLI
+# Generate managed skill blocks in GEMINI.md for terminal environments
 asp generate gemini
 ```
 
 ---
 
-## 📄 Anatomy of a Skill Manifest (`skill.yaml`)
+## 📑 The Canonical Skill Manifest (`skill.yaml`)
 
 ```yaml
 asp: "1.0"                                      # Protocol specification version
 
-id: "io.github.example.code-review"              # Reverse-domain unique identity
+id: "com.enterprise.compliance.code-review"      # Reverse-domain unique identity
 name: "code-review"                             # Canonical handle
-version: "1.0.0"                                # Strict SemVer 2.0.0
-description: "Automated code reviewer for security and performance flaws."
+version: "1.2.0"                                # Strict SemVer 2.0.0
+description: "Audits source code against corporate security and OWASP Top 10 guidelines."
 
 authors:
-  - name: "SkillWire Contributors"
-    url: "https://github.com/ranjith035/SkillWire"
-license: "MIT"
+  - name: "Enterprise Architecture & Security CoE"
+    url: "https://internal.git.corp/ai-standards"
+license: "Apache-2.0"
 
 inputs:
   - name: code
     type: string
-    description: "Source code snippet or file content to analyze"
+    description: "Source code diff or snippet under review"
     required: true
   - name: language
     type: string
-    description: "Programming language (e.g., python, go, rust)"
+    description: "Programming language (e.g., python, go, typescript)"
     required: false
     default: "auto"
 
@@ -201,140 +207,132 @@ outputs:
     enum: [none, low, medium, high, critical]
 
 instructions: |
-  You are an expert principal software engineer and security auditor.
-  Analyze the provided code for logic bugs, memory leaks, and vulnerabilities (OWASP Top 10).
-  Format your response as:
-  ## Summary
-  ## Findings (Severity, Location, Issue, Mitigation)
-  ## Overall Severity
+  You are an enterprise application security auditor.
+  Analyze the provided code for logic vulnerabilities, hardcoded credentials, and memory safety.
+  Format your output as:
+  ## Executive Summary
+  ## Audit Findings (Severity, Code Reference, Risk, Mitigation)
+  ## Compliance Recommendation
 
 capabilities:
-  required: [text_generation, instruction_following]
-  optional: [reasoning]
+  required:
+    - text_generation
+    - instruction_following
+  optional:
+    - reasoning
+
+models:
+  preferred:
+    - capability: instruction_following
+      context_window: ">=32k"
+
+dependencies:
+  - id: "com.enterprise.compliance.credential-scanner"
+    version: ">=1.0.0,<2.0.0"
 
 permissions:
-  network: false                                 # Sandbox guarantees
+  network: false
   filesystem: false
   code_execution: false
 
 metadata:
-  tags: [security, code-review, static-analysis]
+  tags: [security, appsec, compliance]
   category: engineering
   asp_compatible: ">=1.0.0"
 ```
 
 ---
 
-## 🐍 Programmatic Python API
+## 💻 Programmatic SDK Integration
 
-Integrate SkillWire directly into your own applications:
+Incorporate approved enterprise skills directly into internal Python microservices, agent frameworks, or middleware:
 
 ```python
-from pathlib import Path
 from asp.core.manifest import load_manifest
 from asp.core.registry import InstalledSkillsDB
 
-# 1. Access installed skills repository
+# 1. Access the enterprise-governed skills cache
 db = InstalledSkillsDB()
-skill_path = db.get_installed_manifest_path("io.github.example.code-review")
+skill_path = db.get_installed_manifest_path("com.enterprise.compliance.code-review")
 skill = load_manifest(skill_path)
 
-# 2. Render instructions with validated inputs
-rendered_prompt = skill.render_input({
-    "code": "def query_user(user_id): return db.execute(f'SELECT * FROM users WHERE id={user_id}')",
+# 2. Render verified input contracts
+rendered_context = skill.render_input({
+    "code": "auth_header = request.headers.get('Authorization')",
     "language": "python"
 })
 
-# 3. Pass to ANY LLM provider (Zero vendor lock-in)
-# Works identically with Anthropic, Google Gemini, OpenAI, or local Ollama
-print(rendered_prompt)
+# 3. Route to your approved model provider (Anthropic, Gemini, Azure OpenAI, or Ollama)
+# Zero vendor lock-in — prompt logic remains an independent corporate asset
+print(rendered_context)
 ```
 
 ---
 
-## 📊 Feature Comparison
+## 📊 Enterprise Value Matrix: Why Standards Matter
 
-| Capability | Plain Prompts | MCP (Anthropic) | LangChain / LlamaIndex | **SkillWire (ASP)** |
-|:---|:---:|:---:|:---:|:---:|
-| **Standard Scope** | Raw Text | Tools & Data I/O | Agent Graph Orchestration | **Portable Skill Packaging** |
-| **Semantic Versioning** | ❌ None | ❌ None | ❌ None | ✅ **Strict SemVer 2.0.0** |
-| **JSON Schema Validation** | ❌ None | ⚠️ Tools only | ⚠️ Pydantic only | ✅ **Draft 2020-12 Contract** |
-| **Integrity & Checksums** | ❌ None | ❌ None | ❌ None | ✅ **SHA-256 `skill.lock`** |
-| **Dependency Chains** | ❌ None | ❌ None | ⚠️ Python package deps | ✅ **Skill-to-Skill SemVer** |
-| **Runtime Portability** | ❌ Fragmented | ⚠️ Host dependent | ❌ Python framework lock | ✅ **Runs anywhere** |
-| **MCP Integration** | ❌ | Host standard | Custom tool bridges | ✅ **Native MCP Prompt Server** |
-| **Sandboxed Permissions** | ❌ | ⚠️ Tool permissions | ❌ Framework level | ✅ **Explicit capability gates** |
-
----
-
-## 🔒 Security & Threat Model
-
-Skills contain instructions executed by LLMs with access to developer workflows. SkillWire implements defensive safeguards:
-
-* **T-01: Package Tampering**: Enforced via cryptographic SHA-256 digests in `skill.lock`. Any byte alteration triggers `IntegrityError`.
-* **T-03: Privilege Escalation**: Skills must explicitly declare permission requirements (`network`, `filesystem`, `code_execution`). Default is `false` (sandboxed). The CLI prompts for approval before installing elevated skills.
-* **T-05: Path Traversal**: Package unpackers strictly reject relative (`../`) and absolute paths in `.skill` archives.
-
-Read the complete [Security Model & Threat Analysis](docs/security-model.md).
+| Capability | Unmanaged Prompts | Model Context Protocol (MCP) | Proprietary Frameworks | **SkillWire (ASP 1.0)** |
+|---|:---:|:---:|:---:|:---:|
+| **Standard Scope** | Raw Text Snippets | I/O & Tool Connectivity | Application Frameworks | **Portable Skill Packaging & Governance** |
+| **Multi-Model Portability** | ❌ Manual rewrite | ⚠️ Host-dependent | ❌ Framework runtime lock | ✅ **Vendor Neutral by Design** |
+| **Cryptographic Integrity** | ❌ None | ❌ None | ❌ None | ✅ **SHA-256 `skill.lock`** |
+| **Dependency Resolution** | ❌ None | ❌ None | ⚠️ Python packages only | ✅ **Strict SemVer Resolution** |
+| **Schema Validation** | ❌ None | ⚠️ Tool parameters only | ⚠️ Python Pydantic only | ✅ **JSON Schema Draft 2020-12** |
+| **Permission Sandboxing** | ❌ Full exposure | ⚠️ Tool-level grants | ❌ Unmanaged | ✅ **Declarative Capability Gating** |
+| **Enterprise Tool Interop** | ❌ Bespoke | Host standard | Custom adapters | ✅ **Claude Code & Gemini CLI Ready** |
 
 ---
 
-## 🛠️ CLI Reference
+## ⚙️ Enterprise CLI Reference
 
-| Command | Syntax | Description |
-|---|---|---|
-| `init` | `asp init [DIR]` | Scaffolds a new skill directory interactively |
-| `validate` | `asp validate [PATH] [--strict]` | Validates `skill.yaml` against JSON Schema |
-| `pack` | `asp pack [DIR] [-o OUT]` | Builds `.skill` tarball and generates `skill.lock` |
-| `install` | `asp install <SOURCE>` | Installs from `github:owner/repo` or local directory |
-| `list` | `asp list [--json]` | Lists all installed skills, versions, and origins |
-| `search` | `asp search <QUERY>` | Queries GitHub topic registry for skills |
-| `generate` | `asp generate <claude\|gemini>` | Creates native Markdown adapters for AI runtimes |
-| `mcp serve`| `asp mcp serve` | Launches stdio JSON-RPC 2.0 MCP Prompt server |
-| `mcp info` | `asp mcp info` | Prints MCP config JSON for Claude and Gemini |
+The reference CLI (`asp`) provides standard DevOps commands:
 
----
+```bash
+# Initialize a new standardized skill
+asp init [DIRECTORY]
 
-## 📂 Repository Layout
+# Validate schema conformance and contract integrity
+asp validate [PATH] [--strict]
 
-```
-SkillWire/
-├── SPEC.md                             # Normative protocol specification
-├── schema/skill-manifest.schema.json   # Normative JSON Schema
-├── docs/
-│   ├── architecture.md                 # Layered architecture design
-│   ├── competitive-analysis.md         # Industry positioning & gap analysis
-│   ├── security-model.md               # Threat model & cryptographic verification
-│   └── adr/                            # Architecture Decision Records (0001-0004)
-├── cli/
-│   ├── asp/                            # Core engine & CLI commands
-│   └── tests/                          # 96 automated tests (100% pass)
-└── examples/
-    ├── code-review/                    # Reference code audit skill
-    ├── sql-generation/                 # Reference SQL query generator
-    └── security-analysis/              # Reference STRIDE threat modeling skill
+# Compile into an immutable, distributable .skill archive
+asp pack [DIRECTORY] --output [DIST_DIR]
+
+# Install from internal Git, private URL, or local path
+asp install [SOURCE] [--yes] [--dry-run]
+
+# Inspect installed enterprise inventory
+asp list [--json]
+
+# Serve skills to Claude Code & Gemini CLI via stdio MCP
+asp mcp serve
 ```
 
 ---
 
-## 🗺️ Roadmap
+## 📈 Enterprise Adoption Roadmap
 
-- [x] **v0.1.0 (Alpha)**: Normative Specification, JSON Schema Draft 2020-12, Python Reference CLI (`asp`), MCP Prompt Server, Git-native distribution.
-- [ ] **v0.2.0 (Beta)**: Public Skill Registry (`registry.skillwire.org`), `asp publish` command, Cryptographic signing (`x-signature`).
-- [ ] **v0.3.0**: Automated Evaluation Runner (`asp eval`) executing evaluation assertions against configured model targets.
-- [ ] **v1.0.0**: Multi-language SDKs (TypeScript / Node.js, Go, Rust), enterprise private registry support.
+1. **Phase 1: Standardization (Immediate)**
+   * Form an internal AI Standards Taskforce.
+   * Adopt `schema/skill-manifest.schema.json` as the internal contract for reusable prompts and agents.
+2. **Phase 2: Tooling Integration**
+   * Configure `asp mcp serve` within enterprise developer workstations running Claude Code and Gemini CLI.
+   * Eliminate manual copy-pasting of prompt instructions.
+3. **Phase 3: CI/CD Quality Assurance**
+   * Integrate `asp validate` into pull-request validation pipelines.
+   * Enforce regression testing using manifest `evaluation` suites prior to skill release.
+4. **Phase 4: Air-Gapped Governance**
+   * Host internal private skill repositories on corporate Git infrastructure.
+   * Implement automated checksum verification in production agent execution loops.
 
 ---
 
-## 🤝 Contributing
+## 🤝 Governance & Community
 
-We welcome contributions from AI engineers, protocol architects, and security researchers!
-Review [CONTRIBUTING.md](CONTRIBUTING.md) for details on proposing specification changes, code formatting (`black`, `ruff`, `mypy`), and our ADR process.
+SkillWire is an open standard published under the **Apache License, Version 2.0**.
+Organizations are encouraged to participate in protocol evolution:
 
----
-
-## 📜 License
-
-Licensed under the **Apache License, Version 2.0**. See [LICENSE](LICENSE) for details.
+* **Specification**: [`SPEC.md`](SPEC.md)
+* **Architecture RFCs**: [`docs/adr/`](docs/adr/)
+* **Contribution Guidelines**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 Copyright (c) 2025–2026 SkillWire Protocol Contributors.

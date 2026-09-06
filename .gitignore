@@ -22,3 +22,5 @@ WHEEL
 .vscode/
 *.iml
 node_modules/
+*.log
+*System Prompt*.md
