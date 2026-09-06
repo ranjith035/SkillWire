@@ -1,0 +1,138 @@
+asp: "1.0"
+
+id: "io.github.example.code-review"
+name: "code-review"
+version: "1.0.0"
+description: "Reviews source code for bugs, security vulnerabilities, style issues, and best practices."
+
+authors:
+  - name: "SkillWire Contributors"
+    url: "https://github.com/ranjith035/SkillWire"
+
+license: "MIT"
+homepage: "https://github.com/ranjith035/SkillWire/tree/main/examples/code-review"
+repository: "https://github.com/ranjith035/SkillWire"
+
+instructions: |
+  You are an expert code reviewer with deep knowledge of software engineering best
+  practices, common security vulnerabilities (OWASP Top 10), and language-specific idioms.
+
+  When reviewing code:
+  1. Identify bugs and logic errors
+  2. Flag security vulnerabilities (SQL injection, XSS, hardcoded credentials, etc.)
+  3. Note style and readability issues
+  4. Suggest meaningful performance improvements
+  5. Check for proper error handling and edge case coverage
+  6. Assess test coverage gaps
+
+  Format your response as follows:
+
+  ## Summary
+  One concise paragraph on overall code quality.
+
+  ## Findings
+  For each issue found:
+  - **Severity**: critical | high | medium | low | info
+  - **Location**: line number or code excerpt
+  - **Issue**: clear description of the problem
+  - **Recommendation**: specific, actionable fix
+
+  ## Overall Severity
+  The highest severity found: critical | high | medium | low | none
+
+  If no issues are found, respond: "No issues found. Code looks good."
+
+inputs:
+  - name: code
+    type: string
+    description: "The source code to review"
+    required: true
+  - name: language
+    type: string
+    description: "Programming language of the code (python, javascript, go, etc.). Use 'auto' to detect."
+    required: false
+    default: "auto"
+  - name: focus
+    type: string
+    description: "Review focus area"
+    required: false
+    default: "all"
+    enum: [all, security, performance, style, bugs]
+
+outputs:
+  - name: review
+    type: string
+    description: "Structured code review with findings"
+  - name: severity
+    type: string
+    description: "Overall severity level"
+    enum: [none, low, medium, high, critical]
+
+capabilities:
+  required:
+    - text_generation
+    - instruction_following
+  optional:
+    - reasoning
+
+models:
+  preferred:
+    - capability: instruction_following
+      context_window: ">=16k"
+    - capability: reasoning
+      context_window: ">=32k"
+
+runtime:
+  timeout_seconds: 120
+  max_tokens: 4096
+
+examples:
+  - description: "Review a Python function with a SQL injection vulnerability"
+    input:
+      code: |
+        def get_user(user_id):
+            query = f"SELECT * FROM users WHERE id = {user_id}"
+            return db.execute(query)
+      language: python
+      focus: security
+    expected_output_contains:
+      - "SQL injection"
+      - "parameterized"
+      - "critical"
+
+evaluation:
+  cases:
+    - description: "Should detect SQL injection"
+      input:
+        code: "db.execute(f'SELECT * FROM users WHERE id = {user_id}')"
+        language: python
+      assert_contains:
+        - "SQL injection"
+      assert_not_contains:
+        - "No issues found"
+    - description: "Should detect hardcoded password"
+      input:
+        code: "password = 'hunter2'"
+        language: python
+      assert_contains:
+        - "hardcoded"
+    - description: "Should pass clean code"
+      input:
+        code: |
+          def add(a: int, b: int) -> int:
+              return a + b
+        language: python
+      assert_contains:
+        - "No issues"
+
+permissions:
+  network: false
+  filesystem: false
+  code_execution: false
+  tool_use: false
+
+metadata:
+  tags: [code-quality, security, review, static-analysis]
+  category: engineering
+  created_at: "2025-01-15"
+  asp_compatible: ">=1.0.0"

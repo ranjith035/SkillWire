@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asp-protocol.org/schema/skill-manifest/v1.0/schema.json",
+  "title": "ASP Skill Manifest",
+  "description": "JSON Schema for the AI Skill Protocol (ASP) skill manifest (skill.yaml). This schema is the normative specification for what constitutes a valid skill manifest.",
+  "type": "object",
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "description": "A valid Semantic Versioning 2.0.0 version string.",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "examples": ["1.0.0", "2.3.1-beta.1", "0.1.0+build.42"]
+    },
+    "semver_range": {
+      "type": "string",
+      "description": "A semver version range constraint. Supports: >=, <=, >, <, ==, !=, ^ (caret), ~ (tilde), * (wildcard), and comma-separated AND constraints.",
+      "examples": [">=1.0.0,<2.0.0", "^1.2.3", "~1.2.3", "*", "1.0.0"]
+    },
+    "skill_id": {
+      "type": "string",
+      "description": "Globally unique skill identifier in reverse-domain notation. Lowercase letters, digits, dots, and hyphens. Example: io.github.username.my-skill",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+$",
+      "examples": ["io.github.ranjith.code-review", "com.example.sql-generation"]
+    },
+    "skill_name": {
+      "type": "string",
+      "description": "Short, lowercase, hyphen-separated skill name. Used in CLI commands and display.",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["code-review", "sql-generation", "security-analysis"]
+    },
+    "input_name": {
+      "type": "string",
+      "description": "Input/output parameter name. Lowercase letters, digits, and underscores.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "examples": ["code", "language", "input_text"]
+    },
+    "capability": {
+      "type": "string",
+      "description": "An AI model capability identifier. Vendor-neutral.",
+      "enum": [
+        "text_generation",
+        "code_generation",
+        "code_execution",
+        "image_understanding",
+        "tool_use",
+        "instruction_following",
+        "reasoning",
+        "retrieval"
+      ]
+    },
+    "author": {
+      "type": "object",
+      "description": "An author or contributor.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author's full name or organization name.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to author's profile or organization homepage.",
+          "format": "uri"
+        },
+        "email": {
+          "type": "string",
+          "description": "Author's contact email address.",
+          "format": "email"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "input_output": {
+      "type": "object",
+      "description": "A typed input or output parameter definition.",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/input_name",
+          "description": "Parameter name. Must be unique within inputs or outputs."
+        },
+        "type": {
+          "type": "string",
+          "description": "JSON Schema primitive type for this parameter.",
+          "enum": ["string", "number", "integer", "boolean", "object", "array"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this parameter.",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this parameter is required. Defaults to true.",
+          "default": true
+        },
+        "default": {
+          "description": "Default value when parameter is not provided. Only meaningful when required is false."
+        },
+        "enum": {
+          "type": "array",
+          "description": "Restricts the parameter to one of these values.",
+          "items": {},
+          "minItems": 1
+        },
+        "minLength": {
+          "type": "integer",
+          "description": "Minimum string length. Only valid when type is 'string'.",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "description": "Maximum string length. Only valid when type is 'string'.",
+          "minimum": 0
+        }
+      },
+      "required": ["name", "type", "description"],
+      "additionalProperties": false
+    },
+    "dependency": {
+      "type": "object",
+      "description": "A dependency on another ASP skill.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/skill_id",
+          "description": "The skill ID of the dependency."
+        },
+        "version": {
+          "$ref": "#/$defs/semver_range",
+          "description": "Version range constraint for the dependency."
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "Whether this dependency is optional. If true, the skill can run without it but may have reduced functionality.",
+          "default": false
+        }
+      },
+      "required": ["id", "version"],
+      "additionalProperties": false
+    },
+    "tool": {
+      "type": "object",
+      "description": "An external tool or MCP server that this skill may invoke.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tool name."
+        },
+        "description": {
+          "type": "string",
+          "description": "What this tool does."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this tool is required for the skill to function.",
+          "default": false
+        }
+      },
+      "required": ["name", "description"],
+      "additionalProperties": false
+    },
+    "example": {
+      "type": "object",
+      "description": "A sample input/output pair demonstrating skill usage.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this example demonstrates."
+        },
+        "input": {
+          "type": "object",
+          "description": "Input parameter values for this example.",
+          "additionalProperties": true
+        },
+        "expected_output_contains": {
+          "type": "array",
+          "description": "Strings that the output should contain. Used for smoke testing.",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["description", "input"],
+      "additionalProperties": false
+    },
+    "evaluation_case": {
+      "type": "object",
+      "description": "A test case for evaluating skill quality.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What behavior this test case validates."
+        },
+        "input": {
+          "type": "object",
+          "description": "Input values for this test case.",
+          "additionalProperties": true
+        },
+        "assert_contains": {
+          "type": "array",
+          "description": "Strings that the output MUST contain for this test to pass.",
+          "items": { "type": "string" }
+        },
+        "assert_not_contains": {
+          "type": "array",
+          "description": "Strings that the output MUST NOT contain for this test to pass.",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["input"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "asp": {
+      "type": "string",
+      "description": "ASP protocol version this manifest targets. MUST be '1.0' for ASP 1.0 manifests.",
+      "const": "1.0"
+    },
+    "id": {
+      "$ref": "#/$defs/skill_id",
+      "description": "Globally unique skill identifier in reverse-domain notation. Choose a domain you control or use io.github.{username}.{skill-name}."
+    },
+    "name": {
+      "$ref": "#/$defs/skill_name",
+      "description": "Short skill name used in CLI commands and display. Lowercase, hyphen-separated."
+    },
+    "version": {
+      "$ref": "#/$defs/semver",
+      "description": "Skill version following Semantic Versioning 2.0.0. Increment major for breaking changes, minor for new features, patch for bug fixes."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this skill does. Should be clear enough for a developer to understand without reading the instructions.",
+      "minLength": 10,
+      "maxLength": 500
+    },
+    "instructions": {
+      "type": "string",
+      "description": "The LLM instructions defining this skill's behavior. This is the core of the skill — the system prompt or user prompt template that will be injected into the AI runtime. May reference input parameters by name.",
+      "minLength": 10
+    },
+    "authors": {
+      "type": "array",
+      "description": "List of authors or contributors.",
+      "items": { "$ref": "#/$defs/author" },
+      "minItems": 1
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier. See https://spdx.org/licenses/. Examples: MIT, Apache-2.0, GPL-3.0-only.",
+      "examples": ["MIT", "Apache-2.0", "GPL-3.0-only", "BSD-3-Clause"]
+    },
+    "homepage": {
+      "type": "string",
+      "description": "URL to the skill's homepage or documentation.",
+      "format": "uri"
+    },
+    "repository": {
+      "type": "string",
+      "description": "URL to the skill's source code repository.",
+      "format": "uri"
+    },
+    "inputs": {
+      "type": "array",
+      "description": "Typed input parameters this skill accepts. Define all parameters the instructions reference.",
+      "items": { "$ref": "#/$defs/input_output" }
+    },
+    "outputs": {
+      "type": "array",
+      "description": "Typed output values this skill produces. Helps consumers understand the structure of the response.",
+      "items": { "$ref": "#/$defs/input_output" }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "AI model capability requirements. Use capability names rather than vendor names for maximum portability.",
+      "properties": {
+        "required": {
+          "type": "array",
+          "description": "Capabilities the model MUST have for this skill to function correctly.",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        },
+        "optional": {
+          "type": "array",
+          "description": "Capabilities that enhance the skill but are not required.",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "models": {
+      "type": "object",
+      "description": "Model compatibility information.",
+      "properties": {
+        "preferred": {
+          "type": "array",
+          "description": "Preferred model characteristics.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "capability": {
+                "type": "string",
+                "description": "Capability this preference applies to."
+              },
+              "context_window": {
+                "type": "string",
+                "description": "Minimum context window requirement. Examples: '>=16k', '>=100k'.",
+                "pattern": "^[><=!]+\\d+[kKmM]?$"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "unsupported": {
+          "type": "array",
+          "description": "Model names or identifiers known to be incompatible with this skill.",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Other ASP skills this skill depends on. Dependencies are resolved and installed automatically.",
+      "items": { "$ref": "#/$defs/dependency" }
+    },
+    "tools": {
+      "type": "array",
+      "description": "External tools or MCP servers this skill may invoke. Helps runtimes pre-configure the tool environment.",
+      "items": { "$ref": "#/$defs/tool" }
+    },
+    "runtime": {
+      "type": "object",
+      "description": "Execution parameters and resource limits.",
+      "properties": {
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "Maximum execution time in seconds. Runtimes SHOULD enforce this.",
+          "minimum": 1,
+          "maximum": 3600,
+          "default": 120
+        },
+        "max_tokens": {
+          "type": "integer",
+          "description": "Maximum output tokens to request from the model.",
+          "minimum": 1,
+          "maximum": 200000,
+          "default": 4096
+        }
+      },
+      "additionalProperties": false
+    },
+    "examples": {
+      "type": "array",
+      "description": "Sample inputs with expected outputs. Used for documentation and basic smoke testing.",
+      "items": { "$ref": "#/$defs/example" }
+    },
+    "evaluation": {
+      "type": "object",
+      "description": "Quality assurance test cases for this skill.",
+      "properties": {
+        "cases": {
+          "type": "array",
+          "description": "Test cases. Each case specifies inputs and assertions on the output.",
+          "items": { "$ref": "#/$defs/evaluation_case" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "object",
+      "description": "Runtime permissions this skill requires. Clients MUST display non-default permissions to users before execution.",
+      "properties": {
+        "network": {
+          "type": "boolean",
+          "description": "Whether this skill requires network/HTTP access.",
+          "default": false
+        },
+        "filesystem": {
+          "type": "boolean",
+          "description": "Whether this skill requires reading or writing local files.",
+          "default": false
+        },
+        "code_execution": {
+          "type": "boolean",
+          "description": "Whether this skill requires executing code in a sandbox.",
+          "default": false
+        },
+        "tool_use": {
+          "type": "boolean",
+          "description": "Whether this skill requires calling external tools or MCP servers.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for discoverability and compatibility.",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "description": "Searchable tags. Lowercase, max 30 characters each.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "maxLength": 30
+          },
+          "maxItems": 20,
+          "uniqueItems": true
+        },
+        "category": {
+          "type": "string",
+          "description": "Primary category for registry browsing.",
+          "examples": ["engineering", "data", "writing", "security", "productivity"]
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Date the skill was first created (ISO 8601 date).",
+          "format": "date"
+        },
+        "asp_compatible": {
+          "$ref": "#/$defs/semver_range",
+          "description": "Range of ASP protocol versions this skill is compatible with."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["asp", "id", "name", "version", "description", "instructions"],
+  "patternProperties": {
+    "^x-": {
+      "description": "Extension field. Any field prefixed with 'x-' is an extension and must be preserved by conforming implementations."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "asp": "1.0",
+      "id": "io.github.example.code-review",
+      "name": "code-review",
+      "version": "1.0.0",
+      "description": "Reviews source code for bugs, security vulnerabilities, and style issues.",
+      "instructions": "You are an expert code reviewer. Analyze the provided code for bugs, security issues, and style problems.",
+      "license": "MIT",
+      "inputs": [
+        {"name": "code", "type": "string", "description": "Source code to review", "required": true},
+        {"name": "language", "type": "string", "description": "Programming language", "required": false, "default": "auto"}
+      ],
+      "outputs": [
+        {"name": "review", "type": "string", "description": "Structured review findings"}
+      ],
+      "capabilities": {"required": ["text_generation", "instruction_following"]},
+      "permissions": {"network": false, "filesystem": false, "code_execution": false}
+    }
+  ]
+}

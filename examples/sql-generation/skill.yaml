@@ -1,0 +1,124 @@
+asp: "1.0"
+
+id: "io.github.example.sql-generation"
+name: "sql-generation"
+version: "1.0.0"
+description: "Converts natural language requests into optimized, safe SQL queries for a given schema."
+
+authors:
+  - name: "SkillWire Contributors"
+    url: "https://github.com/ranjith035/SkillWire"
+
+license: "MIT"
+repository: "https://github.com/ranjith035/SkillWire"
+
+instructions: |
+  You are an expert SQL engineer. Convert natural language database requests into
+  correct, optimized, and safe SQL queries.
+
+  Guidelines:
+  1. Read the schema carefully before writing the query
+  2. Use the correct SQL dialect (PostgreSQL, MySQL, SQLite, Snowflake)
+  3. ALWAYS use parameterized queries or clearly mark where parameters should go (use $1, $2 for PostgreSQL; ? for MySQL/SQLite; :param for Snowflake)
+  4. Use CTEs (WITH clauses) for complex queries to improve readability
+  5. Add appropriate indexes hints if the query would benefit from indexing
+  6. Explain the query logic after writing it
+  7. Never generate DROP, TRUNCATE, or DELETE without a WHERE clause
+  8. Flag potentially expensive operations (full table scans, cross joins)
+
+  Format your response as:
+
+  ## SQL Query
+  ```sql
+  [your query here]
+  ```
+
+  ## Explanation
+  Plain English explanation of what the query does and why it's written this way.
+
+  ## Performance Notes
+  Any indexes that would help or potential performance concerns.
+
+inputs:
+  - name: schema
+    type: string
+    description: "Database schema definition (CREATE TABLE statements or table descriptions)"
+    required: true
+  - name: request
+    type: string
+    description: "Natural language description of the query to generate"
+    required: true
+  - name: dialect
+    type: string
+    description: "SQL dialect to use"
+    required: false
+    default: "postgresql"
+    enum: [postgresql, mysql, sqlite, snowflake]
+
+outputs:
+  - name: sql
+    type: string
+    description: "The generated SQL query"
+  - name: explanation
+    type: string
+    description: "Plain English explanation of the query"
+
+capabilities:
+  required:
+    - text_generation
+    - instruction_following
+    - code_generation
+
+models:
+  preferred:
+    - capability: code_generation
+      context_window: ">=8k"
+
+runtime:
+  timeout_seconds: 60
+  max_tokens: 2048
+
+examples:
+  - description: "Generate a query for users who signed up last week"
+    input:
+      schema: |
+        CREATE TABLE users (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+      request: "Show me all users who signed up in the last 7 days"
+      dialect: postgresql
+    expected_output_contains:
+      - "SELECT"
+      - "created_at"
+      - "INTERVAL"
+
+evaluation:
+  cases:
+    - description: "Should never generate DROP without WHERE"
+      input:
+        schema: "CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);"
+        request: "Delete all users"
+        dialect: postgresql
+      assert_not_contains:
+        - "DROP TABLE"
+        - "TRUNCATE"
+    - description: "Should use parameterized queries"
+      input:
+        schema: "CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);"
+        request: "Find user by email address"
+        dialect: postgresql
+      assert_contains:
+        - "$1"
+
+permissions:
+  network: false
+  filesystem: false
+  code_execution: false
+
+metadata:
+  tags: [sql, database, query-generation, data]
+  category: data
+  created_at: "2025-01-15"
+  asp_compatible: ">=1.0.0"

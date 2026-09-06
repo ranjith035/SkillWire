@@ -1,0 +1,150 @@
+asp: "1.0"
+
+id: "io.github.example.security-analysis"
+name: "security-analysis"
+version: "1.0.0"
+description: "Performs structured threat modeling using STRIDE methodology for systems, APIs, and codebases."
+
+authors:
+  - name: "SkillWire Contributors"
+    url: "https://github.com/ranjith035/SkillWire"
+
+license: "MIT"
+repository: "https://github.com/ranjith035/SkillWire"
+
+instructions: |
+  You are a senior security engineer specializing in threat modeling and application security.
+  Your job is to perform a structured security analysis using the STRIDE methodology.
+
+  STRIDE stands for:
+  - **S**poofing — impersonating users, services, or processes
+  - **T**ampering — modifying data or code in transit or at rest
+  - **R**epudiation — denying actions without audit evidence
+  - **I**nformation Disclosure — exposing data to unauthorized parties
+  - **D**enial of Service — making a system unavailable
+  - **E**levation of Privilege — gaining unauthorized permissions
+
+  For the provided system description:
+  1. Identify the trust boundaries, data flows, and components
+  2. For each STRIDE category, enumerate applicable threats
+  3. For each threat: assess likelihood (Low/Medium/High) and impact (Low/Medium/High)
+  4. Calculate risk = likelihood × impact
+  5. Provide specific, actionable mitigations
+
+  Format your response as:
+
+  ## System Overview
+  Brief summary of the system and its key components.
+
+  ## Trust Boundaries
+  List the identified trust boundaries.
+
+  ## Threat Analysis
+
+  ### [Threat Category] — [Threat Name]
+  - **Component**: affected component
+  - **Description**: what the threat is
+  - **Likelihood**: Low | Medium | High
+  - **Impact**: Low | Medium | High
+  - **Risk**: Low | Medium | High | Critical
+  - **Mitigation**: specific technical controls to implement
+
+  ## Overall Risk Score
+  Critical | High | Medium | Low — with brief justification
+
+  ## Priority Mitigations
+  Top 5 highest-priority security controls to implement, ordered by risk reduction.
+
+inputs:
+  - name: target
+    type: string
+    description: "Description of the system, API, or codebase to analyze"
+    required: true
+  - name: scope
+    type: string
+    description: "Analysis scope"
+    required: false
+    default: "full"
+    enum: [full, owasp-top10, api-security, infrastructure]
+  - name: context
+    type: string
+    description: "Additional context (tech stack, deployment environment, compliance requirements)"
+    required: false
+    default: ""
+
+outputs:
+  - name: threat_model
+    type: string
+    description: "Structured STRIDE threat model"
+  - name: risk_score
+    type: string
+    description: "Overall risk level"
+    enum: [low, medium, high, critical]
+  - name: recommendations
+    type: string
+    description: "Prioritized security recommendations"
+
+capabilities:
+  required:
+    - text_generation
+    - instruction_following
+    - reasoning
+  optional:
+    - code_generation
+
+models:
+  preferred:
+    - capability: reasoning
+      context_window: ">=32k"
+
+dependencies:
+  - id: "io.github.example.code-review"
+    version: ">=1.0.0,<2.0.0"
+    optional: true
+
+runtime:
+  timeout_seconds: 180
+  max_tokens: 8192
+
+examples:
+  - description: "Analyze a REST API for security threats"
+    input:
+      target: |
+        A REST API for a banking application that:
+        - Accepts JWT tokens for authentication
+        - Exposes endpoints for account balance, transfers, and history
+        - Stores data in PostgreSQL
+        - Deployed on AWS behind an API Gateway
+      scope: api-security
+    expected_output_contains:
+      - "Spoofing"
+      - "JWT"
+      - "HTTPS"
+
+evaluation:
+  cases:
+    - description: "Should identify authentication threats"
+      input:
+        target: "A web application with username/password login"
+        scope: full
+      assert_contains:
+        - "Spoofing"
+        - "authentication"
+    - description: "Should provide mitigations"
+      input:
+        target: "A public REST API with no authentication"
+        scope: full
+      assert_contains:
+        - "Mitigation"
+        - "authentication"
+
+permissions:
+  network: false
+  filesystem: false
+  code_execution: false
+
+metadata:
+  tags: [security, threat-modeling, stride, appsec, owasp]
+  category: security
+  created_at: "2025-01-15"
+  asp_compatible: ">=1.0.0"

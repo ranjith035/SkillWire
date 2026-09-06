@@ -1,0 +1,8 @@
+{
+  "asp": "1.0",
+  "skill_id": "io.github.example.code-review",
+  "skill_version": "1.0.0",
+  "manifest_sha256": "acfb0d86f1d084b9f37a56a1f50c9001bc0ef61ed3f7219e45d39a7d0bd944f3",
+  "generated_at": "2026-09-06T16:58:25.192445Z",
+  "dependencies": []
+}
